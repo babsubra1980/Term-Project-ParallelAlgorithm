@@ -1,8 +1,14 @@
-public class LLPWorkerState {
-    public LLPWorkerState(int latticeIndex, int[] latticeValues) {
+public class LLPWorkerState<TInput> {
+    public LLPWorkerState(int latticeIndex, int[] latticeValues, TInput input) {
         this.latticeIndex = latticeIndex;
         this.latticeValues = latticeValues;
+        this.input = input;
     }
+
+    /**
+     * Input object
+     */
+    public final TInput input;
 
     /**
      * The lattice index held by this worker.

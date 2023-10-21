@@ -1,4 +1,4 @@
-public interface LLPWorker {
+public interface LLPWorker<TInput> {
     /**
      * Set the state container for this worker; this only needs to be called once
      * per worker, during the initialization phase. No two workers may hold the same
@@ -6,7 +6,7 @@ public interface LLPWorker {
      * 
      * @param state State held by this worker.
      */
-    public void setState(LLPWorkerState state);
+    public void setState(LLPWorkerState<TInput> state);
 
     /**
      * Check whether the lattice index held by this worker is in a forbidden state.
@@ -29,4 +29,11 @@ public interface LLPWorker {
      * if (isForbidden()) state.setValue(getAdvanceValue());
      */
     public void advance();
+
+    /**
+     * Clone this worker instance.
+     * 
+     * @return
+     */
+    public LLPWorker<TInput> clone();
 }
