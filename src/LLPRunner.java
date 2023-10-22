@@ -86,13 +86,6 @@ public class LLPRunner<TInput, TOutput> {
                     for (LLPWorker<TInput> worker : threadWorkers) {
                         worker.advance();
                     }
-                    boolean forbiddenFound = false;
-                    for (LLPWorker<TInput> worker : threadWorkers) {
-                        if (worker.isForbidden()) {
-                            forbiddenFound = true;
-                        }
-                    }
-                    threadMayHaveForbidden = forbiddenFound;
                 }
             } finally {
                 rwlock.readLock().unlock();

@@ -32,6 +32,15 @@ public class LLPWorkerState<TInput> implements Cloneable {
     }
 
     /**
+     * Get the value held by this worker.
+     * 
+     * @return The current value.
+     */
+    public int getValue() {
+        return latticeValues[latticeIndex];
+    }
+
+    /**
      * Set the lattice index.
      * 
      * @param latticeIndex The new lattice index.

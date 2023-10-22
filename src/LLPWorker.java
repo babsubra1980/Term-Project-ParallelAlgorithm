@@ -34,10 +34,15 @@ public interface LLPWorker<TInput> extends Cloneable {
     public int getAdvanceValue();
 
     /**
-     * Advance the held index if it is forbidden; otherwise, do nothing. The typical
-     * implementation is:
+     * Advance the held index if it is forbidden; otherwise, do nothing. A typical
+     * implementation (ignoring synchronization) is:
      * 
      * if (isForbidden()) state.setValue(getAdvanceValue());
+     * 
+     * Note that this version is inefficient since the forbidden condition may be
+     * computed twice (once for isForbidden(), once for getAdvanceValue()). In
+     * practice, the structure of the problem should be used to eliminate one of
+     * these calls.
      */
     public void advance();
 

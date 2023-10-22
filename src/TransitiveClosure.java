@@ -1,4 +1,6 @@
 public class TransitiveClosure {
+    private final Object ob = new Object();
+
     public class OutputBuilder implements LLPOutputBuilder<Integer[][], Integer[][]> {
         private Integer[][] input;
         private int size;
@@ -51,8 +53,11 @@ public class TransitiveClosure {
 
         @Override
         public void advance() {
-            if (isForbidden()) {
-                state.setValue(getAdvanceValue());
+            int newValue = getAdvanceValue();
+            if (newValue > state.getValue()) {
+                synchronized (ob) {
+                    state.setValue(newValue);
+                }
             }
         }
 
