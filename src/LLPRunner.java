@@ -13,7 +13,7 @@ public class LLPRunner<TInput, TOutput> {
     private List<List<LLPWorker<TInput>>> threadAssignments;
     private final int numThreads;
     private final DispatchAlgorithm dispatchAlgorithm;
-    private Object ob;
+    private Object ob; // for synchronization
     private ReadWriteLock rwlock = new ReentrantReadWriteLock();
     private Thread supervisorThread;
     private final int timeout;

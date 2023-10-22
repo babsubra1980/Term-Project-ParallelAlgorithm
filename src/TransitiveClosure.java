@@ -1,5 +1,28 @@
 public class TransitiveClosure {
-    private final Object ob = new Object();
+    private final Object ob = new Object(); // for synchronization
+
+    /**
+     * Run the LLP algorithm for transitive closure.
+     * 
+     * @param input      A square matrix, each entry of which may be 0 or 1,
+     *                   indicating absence resp. presence of a directed edge.
+     * @param numThreads The number of threads (separate from the main thread). This
+     *                   should typically be equal to the total number of cores
+     *                   minus one (for full utilization off the main thread).
+     * @return The output of LLP upon completion.
+     */
+    public Integer[][] execute(Integer[][] input, int numThreads) throws InterruptedException {
+        LLPRunner<Integer[][], Integer[][]> runner = new LLPRunner.LLPRunnerBuilder<Integer[][], Integer[][]>()
+                .setInitializer(new Initializer())
+                .setInput(input)
+                .setNumThreads(numThreads)
+                .setWorkerPrototype(new Worker())
+                .setOutputBuilder(new OutputBuilder())
+                .build();
+        runner.computeLLP();
+        runner.joinAllThreads();
+        return runner.getOutput();
+    }
 
     public class OutputBuilder implements LLPOutputBuilder<Integer[][], Integer[][]> {
         private Integer[][] input;
@@ -34,16 +57,52 @@ public class TransitiveClosure {
 
     public class Worker implements LLPWorker<Integer[][]> {
         private LLPWorkerState<Integer[][]> state;
+        private int[] linearIndicesIK;
+        private int[] linearIndicesKJ;
 
         @Override
         public void setState(LLPWorkerState<Integer[][]> state) {
             this.state = state;
+            recomputeLatticeIndices();
+        }
+
+        private void recomputeLatticeIndices() {
+            int size = state.input.length;
+            int latticeIndex = state.getLatticeIndex();
+            int rowIdx = getRowIdx(latticeIndex, size);
+            int colIdx = getColIdx(latticeIndex, size);
+            linearIndicesIK = new int[size];
+            linearIndicesKJ = new int[size];
+            for (int k = 0; k < size; k += 1) {
+                linearIndicesIK[k] = getLinearIndex(rowIdx, k, size);
+                linearIndicesKJ[k] = getLinearIndex(k, colIdx, size);
+            }
         }
 
         @Override
         public boolean isForbidden() {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'isForbidden'");
+            int size = state.input.length;
+
+            for (int k = 0; k < size; k += 1) {
+                int value = 0;
+                int linearIndexIK = linearIndicesIK[k];
+                int linearIndexKJ = linearIndicesKJ[k];
+                int edgeIK = 0;
+                int edgeKJ = 0;
+                synchronized (ob) {
+                    value = state.getValue();
+                    edgeIK = state.getValue(linearIndexIK);
+                    edgeKJ = state.getValue(linearIndexKJ);
+                }
+                if (value == 1) {
+                    return false;
+                }
+                if (edgeIK == 1 && edgeKJ == 1) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         @Override
@@ -71,6 +130,7 @@ public class TransitiveClosure {
         @Override
         public void setLatticeIndex(int latticeIndex) {
             state.setLatticeIndex(latticeIndex);
+            recomputeLatticeIndices();
         }
     }
 
@@ -89,30 +149,15 @@ public class TransitiveClosure {
         }
     }
 
-    public static int getLinearIndex(int rowIdx, int colIdx, int size) {
+    private static int getLinearIndex(int rowIdx, int colIdx, int size) {
         return size * rowIdx + colIdx; // row major order
     }
 
-    /**
-     * Run the LLP algorithm for transitive closure.
-     * 
-     * @param input      A square matrix, each entry of which may be 0 or 1,
-     *                   indicating absence resp. presence of a directed edge.
-     * @param numThreads The number of threads (separate from the main thread). This
-     *                   should typically be equal to the total number of cores
-     *                   minus one (for full utilization off the main thread).
-     * @return The output of LLP upon completion.
-     */
-    public Integer[][] execute(Integer[][] input, int numThreads) throws InterruptedException {
-        LLPRunner<Integer[][], Integer[][]> runner = new LLPRunner.LLPRunnerBuilder<Integer[][], Integer[][]>()
-                .setInitializer(new Initializer())
-                .setInput(input)
-                .setNumThreads(numThreads)
-                .setWorkerPrototype(new Worker())
-                .setOutputBuilder(new OutputBuilder())
-                .build();
-        runner.computeLLP();
-        runner.joinAllThreads();
-        return runner.getOutput();
+    private static int getColIdx(int linearIndex, int size) {
+        return linearIndex % size;
+    }
+
+    private static int getRowIdx(int linearIndex, int size) {
+        return linearIndex / size;
     }
 }

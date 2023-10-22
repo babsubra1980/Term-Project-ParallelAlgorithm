@@ -13,7 +13,7 @@ public class LLPWorkerState<TInput> implements Cloneable {
     /**
      * The lattice index held by this worker.
      */
-    public int latticeIndex;
+    private int latticeIndex;
 
     /**
      * Pointer to the shared memory location of the lattice vector (non-negative
@@ -41,12 +41,31 @@ public class LLPWorkerState<TInput> implements Cloneable {
     }
 
     /**
+     * Get the value held by any worker.
+     * 
+     * @param i The lattice index to retrieve.
+     * @return The value.
+     */
+    public int getValue(int i) {
+        return latticeValues[i];
+    }
+
+    /**
      * Set the lattice index.
      * 
      * @param latticeIndex The new lattice index.
      */
     public void setLatticeIndex(int latticeIndex) {
         this.latticeIndex = latticeIndex;
+    }
+
+    /**
+     * Get the lattice index.
+     * 
+     * @return The lattice index.
+     */
+    public int getLatticeIndex() {
+        return latticeIndex;
     }
 
     public LLPWorkerState<TInput> clone() {
