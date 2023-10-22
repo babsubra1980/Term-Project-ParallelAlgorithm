@@ -1,4 +1,4 @@
-public class LLPWorkerState<TInput> {
+public class LLPWorkerState<TInput> implements Cloneable {
     public LLPWorkerState(int latticeIndex, int[] latticeValues, TInput input) {
         this.latticeIndex = latticeIndex;
         this.latticeValues = latticeValues;
@@ -13,7 +13,7 @@ public class LLPWorkerState<TInput> {
     /**
      * The lattice index held by this worker.
      */
-    public final int latticeIndex;
+    public int latticeIndex;
 
     /**
      * Pointer to the shared memory location of the lattice vector (non-negative
@@ -29,5 +29,18 @@ public class LLPWorkerState<TInput> {
      */
     public void setValue(int value) {
         latticeValues[latticeIndex] = value;
+    }
+
+    /**
+     * Set the lattice index.
+     * 
+     * @param latticeIndex The new lattice index.
+     */
+    public void setLatticeIndex(int latticeIndex) {
+        this.latticeIndex = latticeIndex;
+    }
+
+    public LLPWorkerState<TInput> clone() {
+        return new LLPWorkerState<TInput>(latticeIndex, latticeValues, input);
     }
 }

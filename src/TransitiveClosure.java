@@ -1,29 +1,41 @@
 public class TransitiveClosure {
     public class OutputBuilder implements LLPOutputBuilder<Integer[][], Integer[][]> {
+        private Integer[][] input;
+        private int size;
+        private int[] latticeValues;
+
         @Override
         public Integer[][] build() {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'build'");
+            Integer[][] output = new Integer[size][size];
+            for (int i = 0; i < size; i += 1) {
+                for (int j = 0; j < size; j += 1) {
+                    int k = getLinearIndex(i, j, size);
+                    output[i][j] = latticeValues[k];
+                }
+            }
+            return output;
         }
 
         @Override
         public LLPOutputBuilder<Integer[][], Integer[][]> setInput(Integer[][] input) {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'setInput'");
+            this.input = input;
+            this.size = this.input.length;
+            return this;
         }
 
         @Override
         public LLPOutputBuilder<Integer[][], Integer[][]> setLatticeValues(int[] latticeValues) {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'setLatticeValues'");
+            this.latticeValues = latticeValues;
+            return this;
         }
     }
 
     public class Worker implements LLPWorker<Integer[][]> {
+        private LLPWorkerState<Integer[][]> state;
+
         @Override
         public void setState(LLPWorkerState<Integer[][]> state) {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'setState'");
+            this.state = state;
         }
 
         @Override
@@ -34,35 +46,56 @@ public class TransitiveClosure {
 
         @Override
         public int getAdvanceValue() {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'getAdvanceValue'");
+            return isForbidden() ? 1 : 0;
         }
 
         @Override
         public void advance() {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'advance'");
+            if (isForbidden()) {
+                state.setValue(getAdvanceValue());
+            }
         }
 
         @Override
         public LLPWorker<Integer[][]> clone() {
-            return this;
+            Worker workerClone = new Worker();
+            workerClone.setState(state.clone());
+            return workerClone;
+        }
+
+        @Override
+        public void setLatticeIndex(int latticeIndex) {
+            state.setLatticeIndex(latticeIndex);
         }
     }
 
     public class Initializer implements LLPInitializer<Integer[][]> {
         @Override
         public int[] createInitialLatticeState(Integer[][] input) {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'createInitialLatticeState'");
+            int size = input.length;
+            int[] latticeState = new int[size * size];
+            for (int i = 0; i < size; i += 1) {
+                for (int j = 0; j < size; j += 1) {
+                    int k = getLinearIndex(i, j, size);
+                    latticeState[k] = input[i][j];
+                }
+            }
+            return latticeState;
         }
+    }
+
+    public static int getLinearIndex(int rowIdx, int colIdx, int size) {
+        return size * rowIdx + colIdx; // row major order
     }
 
     /**
      * Run the LLP algorithm for transitive closure.
      * 
-     * @param input A square matrix, each entry of which may be 0 or 1, indicating
-     *              absence resp. presence of a directed edge.
+     * @param input      A square matrix, each entry of which may be 0 or 1,
+     *                   indicating absence resp. presence of a directed edge.
+     * @param numThreads The number of threads (separate from the main thread). This
+     *                   should typically be equal to the total number of cores
+     *                   minus one (for full utilization off the main thread).
      * @return The output of LLP upon completion.
      */
     public Integer[][] execute(Integer[][] input, int numThreads) throws InterruptedException {

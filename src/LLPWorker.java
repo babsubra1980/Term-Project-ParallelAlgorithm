@@ -1,5 +1,3 @@
-import java.lang.Cloneable;
-
 public interface LLPWorker<TInput> extends Cloneable {
     /**
      * Set the state container for this worker; this only needs to be called once
@@ -18,9 +16,20 @@ public interface LLPWorker<TInput> extends Cloneable {
     public boolean isForbidden();
 
     /**
+     * Set the lattice index for this worker. The typical implementation is:
+     * 
+     * state.setLatticeIndex(latticeIndex);
+     * 
+     * @param latticeIndex The new lattice index.
+     */
+    public void setLatticeIndex(int latticeIndex);
+
+    /**
      * Compute the (non-negative) value to which the held index may advance.
      * 
-     * @return The position to which the held index may advance.
+     * @return The position to which the held index may advance. Does not need to be
+     *         optimal but must be at least "one more" than the previous value if
+     *         the local state is not forbidden prior to calling this method.
      */
     public int getAdvanceValue();
 
