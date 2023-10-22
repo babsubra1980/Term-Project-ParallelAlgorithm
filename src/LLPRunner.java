@@ -1,14 +1,22 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class LLPRunner<TInput, TOutput> {
     private final List<LLPWorker<TInput>> workers;
     private final TInput input;
     private final LLPOutputBuilder<TInput, TOutput> llpOutputBuilder;
     private final int[] latticeValues;
-    private List<Thread> threads;
+    private List<Thread> workerThreads;
+    private List<List<LLPWorker<TInput>>> threadAssignments;
     private final int numThreads;
     private final DispatchAlgorithm dispatchAlgorithm;
+    private Object ob;
+    private ReadWriteLock rwlock = new ReentrantReadWriteLock();
+    private Thread supervisorThread;
+    private final int timeout;
 
     public static enum DispatchAlgorithm {
         /**
@@ -29,14 +37,80 @@ public class LLPRunner<TInput, TOutput> {
         NAIVE
     }
 
+    /**
+     * Run the supervisor thread.
+     */
+    private void RunSupervisor() {
+        ob = new Object();
+        synchronized (ob) {
+            while (true) {
+                try {
+                    ob.wait(timeout);
+                } catch (InterruptedException ex) {
+                    // do nothing
+                }
+
+                rwlock.writeLock().lock();
+                try {
+                    // check if a reader is in a forbidden state
+                    boolean isForbidden = false;
+                    for (LLPWorker<TInput> worker : workers) {
+                        if (worker.isForbidden()) {
+                            isForbidden = true;
+                        }
+                    }
+                    if (!isForbidden) {
+                        break;
+                    }
+                } finally {
+                    rwlock.writeLock().unlock();
+                }
+            }
+        }
+    }
+
+    /**
+     * Run a worker thread.
+     * 
+     * @param threadWorkers The workers for this thread.
+     */
+    private void RunWorker(List<LLPWorker<TInput>> threadWorkers) {
+        if (threadWorkers.size() == 0) {
+            return;
+        }
+        while (true) {
+            rwlock.readLock().lock();
+            try {
+                boolean threadMayHaveForbidden = true; // there may be a forbidden state among this thread's workers
+                while (threadMayHaveForbidden) {
+                    for (LLPWorker<TInput> worker : threadWorkers) {
+                        worker.advance();
+                    }
+                    boolean forbiddenFound = false;
+                    for (LLPWorker<TInput> worker : threadWorkers) {
+                        if (worker.isForbidden()) {
+                            forbiddenFound = true;
+                        }
+                    }
+                    threadMayHaveForbidden = forbiddenFound;
+                }
+            } finally {
+                rwlock.readLock().unlock();
+            }
+            ob.notifyAll();
+        }
+    }
+
     private LLPRunner(List<LLPWorker<TInput>> workers, int[] latticeValues, TInput input,
-            LLPOutputBuilder<TInput, TOutput> llpOutputBuilder, int numThreads, DispatchAlgorithm dispatchAlgorithm) {
+            LLPOutputBuilder<TInput, TOutput> llpOutputBuilder, int numThreads, DispatchAlgorithm dispatchAlgorithm,
+            int timeout) {
         this.workers = workers;
         this.latticeValues = latticeValues;
         this.input = input;
         this.llpOutputBuilder = llpOutputBuilder;
         this.numThreads = numThreads;
         this.dispatchAlgorithm = dispatchAlgorithm;
+        this.timeout = timeout;
     }
 
     public static class LLPRunnerBuilder<SInput, SOutput> {
@@ -46,6 +120,7 @@ public class LLPRunner<TInput, TOutput> {
         private List<LLPWorker<SInput>> workers;
         private LLPWorker<SInput> worker;
         private int numThreads = 8;
+        private int timeout = 100;
         private DispatchAlgorithm dispatchAlgorithm = DispatchAlgorithm.ROUND_ROBIN;
 
         /**
@@ -76,13 +151,32 @@ public class LLPRunner<TInput, TOutput> {
             return this;
         }
 
+        /**
+         * Set the timeout in ms (default 100).
+         * 
+         * @param timeout The timeout
+         * @return This builder
+         */
+        public LLPRunnerBuilder<SInput, SOutput> setTimeout(int timeout) {
+            this.timeout = timeout;
+            return this;
+        }
+
+        /**
+         * Set the dispatch algorithm (default round robin).
+         * 
+         * @param dispatchAlgorithm Dispatch algorithm
+         * @return Thils builder
+         */
         public LLPRunnerBuilder<SInput, SOutput> setDispatchAlgorithm(DispatchAlgorithm dispatchAlgorithm) {
             this.dispatchAlgorithm = dispatchAlgorithm;
             return this;
         }
 
         /**
-         * Set the number of threads (defaults to 8 if never called)
+         * Set the number of threads (defaults to 8 if never called). The number of
+         * worker threads (each of which may hold multiple workers) is equal to
+         * (numThreads-1).
          * 
          * @param numThreads The number of threads
          * @return This builder
@@ -133,7 +227,102 @@ public class LLPRunner<TInput, TOutput> {
                     input,
                     llpOutputBuilder,
                     numThreads,
-                    dispatchAlgorithm);
+                    dispatchAlgorithm,
+                    timeout);
+        }
+    }
+
+    /**
+     * Round robin dispatch helper.
+     */
+    private void partitionWorkersRoundRobin() {
+        int i = 0;
+        for (LLPWorker<TInput> worker : workers) {
+            threadAssignments.get(i).add(worker);
+            i = (i + 1) % (threadAssignments.size());
+        }
+    }
+
+    /**
+     * Random dispatch helper.
+     */
+    private void partitionWorkersRandom() {
+        for (LLPWorker<TInput> worker : workers) {
+            int i = ThreadLocalRandom.current().nextInt(threadAssignments.size());
+            threadAssignments.get(i).add(worker);
+        }
+    }
+
+    /**
+     * Naive dispatch helper.
+     */
+    private void partitionWorkersNaive() {
+        int numWorkers = workers.size();
+        int numWorkerThreads = threadAssignments.size();
+        int blockSize = numWorkers / numWorkerThreads;
+        int remainder = numWorkers - (blockSize * numWorkerThreads);
+        int i = 0; // worker index
+        int curSize = blockSize + 1;
+        for (List<LLPWorker<TInput>> assignment : threadAssignments) {
+            if (remainder == 0 && curSize > blockSize) {
+                curSize -= 1;
+            } else {
+                remainder -= 1;
+            }
+
+            for (int j = 0; j < curSize; j += 1) {
+                assignment.add(workers.get(i));
+                i += 1;
+            }
+        }
+    }
+
+    /**
+     * Partition the workers to respective threads using the chosen dispatch
+     * algorithm.
+     */
+    private void partitionWorkers() {
+        for (int i = 0; i < numThreads - 1; i += 1) {
+            threadAssignments.add(new ArrayList<LLPWorker<TInput>>());
+        }
+        switch (dispatchAlgorithm) {
+            case ROUND_ROBIN:
+                partitionWorkersRoundRobin();
+                break;
+            case RANDOM:
+                partitionWorkersRandom();
+                break;
+            case NAIVE:
+                partitionWorkersNaive();
+                break;
+            default:
+                partitionWorkersRoundRobin();
+                break;
+        }
+    }
+
+    /**
+     * Construct and start all the threads. Must not be called before
+     * partitionWorkers().
+     */
+    private void startThreads() {
+        supervisorThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                RunSupervisor();
+            }
+        });
+        supervisorThread.start();
+
+        for (List<LLPWorker<TInput>> assignment : threadAssignments) {
+            Thread workerThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    RunWorker(assignment);
+                }
+            });
+            workerThread.start();
+            workerThreads.add(workerThread);
         }
     }
 
@@ -141,17 +330,18 @@ public class LLPRunner<TInput, TOutput> {
      * Run the LLP algorithm in the background.
      */
     public void computeLLP() {
-        // step 1: partition the workers
-        // step 2: create and start the threads
+        partitionWorkers();
+        startThreads();
     }
 
     /**
      * Block the main (or calling) thread until all worker threads have completed.
      */
     public void joinAllThreads() throws InterruptedException {
-        for (int i = 0; i < threads.size(); i += 1) {
-            threads.get(i).join();
+        for (int i = 0; i < workerThreads.size(); i += 1) {
+            workerThreads.get(i).join();
         }
+        supervisorThread.join();
     }
 
     /**
