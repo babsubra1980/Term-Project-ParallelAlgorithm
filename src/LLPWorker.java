@@ -1,4 +1,6 @@
-public interface LLPWorker<TInput> {
+import java.lang.Cloneable;
+
+public interface LLPWorker<TInput> extends Cloneable {
     /**
      * Set the state container for this worker; this only needs to be called once
      * per worker, during the initialization phase. No two workers may hold the same
@@ -33,7 +35,7 @@ public interface LLPWorker<TInput> {
     /**
      * Clone this worker instance.
      * 
-     * @return
+     * @return Clone of this instance
      */
     public LLPWorker<TInput> clone();
 }

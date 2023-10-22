@@ -174,9 +174,11 @@ public class LLPRunner<TInput, TOutput> {
         }
 
         /**
-         * Set the number of threads (defaults to 8 if never called). The number of
+         * Set the number of threads (defaults to 7 if never called). The number of
          * worker threads (each of which may hold multiple workers) is equal to
-         * (numThreads-1).
+         * (numThreads-1). There is also a supervisor thread which is separate from the
+         * main thread, bringing the total to numThreads. Thus numThreads should
+         * typically be equal to the number of cores minus one.
          * 
          * @param numThreads The number of threads
          * @return This builder
@@ -345,7 +347,7 @@ public class LLPRunner<TInput, TOutput> {
     }
 
     /**
-     * Get the output
+     * Get the output. Must not be called before joinAllThreads().
      * 
      * @return The output
      */
