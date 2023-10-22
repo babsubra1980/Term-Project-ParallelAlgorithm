@@ -123,7 +123,9 @@ public class TransitiveClosure {
         @Override
         public LLPWorker<Integer[][]> clone() {
             Worker workerClone = new Worker();
-            workerClone.setState(state.clone());
+            if (state != null) {
+                workerClone.setState(state.clone());
+            }
             return workerClone;
         }
 
