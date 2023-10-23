@@ -215,7 +215,7 @@ public class LLPRunner<TInput, TOutput> {
             for (int i = 0; i < latticeValues.length; i += 1) {
                 LLPWorker<SInput> workerClone = worker.clone();
                 workerClone.setState(new LLPWorkerState<SInput>(i, latticeValues, input));
-                workers.set(i, workerClone);
+                workers.add(workerClone);
             }
             return new LLPRunner<SInput, SOutput>(
                     workers,
