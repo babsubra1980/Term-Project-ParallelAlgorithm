@@ -9,12 +9,12 @@ public class LLPRunner<TInput, TOutput> {
     private final TInput input;
     private final LLPOutputBuilder<TInput, TOutput> llpOutputBuilder;
     private final int[] latticeValues;
-    private List<Thread> workerThreads;
-    private List<List<LLPWorker<TInput>>> threadAssignments;
+    private final List<Thread> workerThreads = new ArrayList<Thread>();
+    private final List<List<LLPWorker<TInput>>> threadAssignments = new ArrayList<List<LLPWorker<TInput>>>();
     private final int numThreads;
     private final DispatchAlgorithm dispatchAlgorithm;
     private Object ob; // for synchronization
-    private ReadWriteLock rwlock = new ReentrantReadWriteLock();
+    private final ReadWriteLock rwlock = new ReentrantReadWriteLock();
     private Thread supervisorThread;
     private final int timeout;
 
@@ -81,16 +81,17 @@ public class LLPRunner<TInput, TOutput> {
         while (true) {
             rwlock.readLock().lock();
             try {
-                boolean threadMayHaveForbidden = true; // there may be a forbidden state among this thread's workers
-                while (threadMayHaveForbidden) {
-                    for (LLPWorker<TInput> worker : threadWorkers) {
-                        worker.advance();
-                    }
+                for (LLPWorker<TInput> worker : threadWorkers) {
+                    worker.advance();
                 }
             } finally {
                 rwlock.readLock().unlock();
             }
-            ob.notifyAll();
+            if (ob != null) {
+                synchronized (ob) {
+                    ob.notifyAll();
+                }
+            }
         }
     }
 
@@ -277,6 +278,8 @@ public class LLPRunner<TInput, TOutput> {
      * algorithm.
      */
     private void partitionWorkers() {
+        threadAssignments.clear();
+        workerThreads.clear();
         for (int i = 0; i < numThreads - 1; i += 1) {
             threadAssignments.add(new ArrayList<LLPWorker<TInput>>());
         }
