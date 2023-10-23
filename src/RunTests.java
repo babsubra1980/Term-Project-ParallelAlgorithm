@@ -1,7 +1,7 @@
 public class RunTests {
     public static void testTransitiveClosure() {
         System.out.println("**");
-        System.out.println("** ParallelTranstiveClosure **");
+        System.out.println("** ParallelTransitiveClosure **");
         TransitiveClosure pt = new TransitiveClosure();
         System.out.println("**");
         Integer[][] graph = {

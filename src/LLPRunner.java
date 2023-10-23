@@ -17,6 +17,7 @@ public class LLPRunner<TInput, TOutput> {
     private final ReadWriteLock rwlock = new ReentrantReadWriteLock();
     private Thread supervisorThread;
     private final int timeout;
+    private boolean done = false;
 
     public static enum DispatchAlgorithm {
         /**
@@ -67,6 +68,7 @@ public class LLPRunner<TInput, TOutput> {
                 }
             }
         }
+        done = true;
     }
 
     /**
@@ -78,7 +80,7 @@ public class LLPRunner<TInput, TOutput> {
         if (threadWorkers.size() == 0) {
             return;
         }
-        while (true) {
+        while (!done) {
             rwlock.readLock().lock();
             try {
                 for (LLPWorker<TInput> worker : threadWorkers) {
@@ -87,10 +89,10 @@ public class LLPRunner<TInput, TOutput> {
             } finally {
                 rwlock.readLock().unlock();
             }
-            if (ob != null) {
-                synchronized (ob) {
-                    ob.notifyAll();
-                }
+            while (ob == null) {
+            }
+            synchronized (ob) {
+                ob.notifyAll();
             }
         }
     }
@@ -174,10 +176,13 @@ public class LLPRunner<TInput, TOutput> {
          * main thread, bringing the total to numThreads. Thus numThreads should
          * typically be equal to the number of cores minus one.
          * 
-         * @param numThreads The number of threads
+         * @param numThreads The number of threads (must not be less than 2).
          * @return This builder
          */
         public LLPRunnerBuilder<SInput, SOutput> setNumThreads(int numThreads) {
+            if (numThreads < 2) {
+                throw new IllegalArgumentException("numThreads must be at least 2");
+            }
             this.numThreads = numThreads;
             return this;
         }
@@ -325,21 +330,27 @@ public class LLPRunner<TInput, TOutput> {
     }
 
     /**
-     * Run the LLP algorithm in the background.
+     * Run the LLP algorithm in the background; this must never be called more than
+     * once on a given LLPRunner instance.
      */
     public void computeLLP() {
+        if (done) {
+            return;
+        }
         partitionWorkers();
         startThreads();
     }
 
     /**
-     * Block the main (or calling) thread until all worker threads have completed.
+     * Block the main (or calling) thread until all worker threads have completed;
+     * this must never be called more than once on a given LLPRunner instance, and
+     * must never be called before computeLLP().
      */
     public void joinAllThreads() throws InterruptedException {
+        supervisorThread.join();
         for (int i = 0; i < workerThreads.size(); i += 1) {
             workerThreads.get(i).join();
         }
-        supervisorThread.join();
     }
 
     /**
