@@ -1,6 +1,8 @@
 public class TransitiveClosure {
     private final Object ob = new Object(); // for synchronization
 
+    private Integer[][] linearIndices = new Integer[0][0];
+
     /**
      * Run the LLP algorithm for transitive closure.
      * 
@@ -57,26 +59,16 @@ public class TransitiveClosure {
 
     public class Worker implements LLPWorker<Integer[][]> {
         private LLPWorkerState<Integer[][]> state;
-        private int[] linearIndicesIK;
-        private int[] linearIndicesKJ;
+        private int rowIdx;
+        private int colIdx;
+        private int size;
 
         @Override
         public void setState(LLPWorkerState<Integer[][]> state) {
             this.state = state;
-            recomputeLatticeIndices();
-        }
-
-        private void recomputeLatticeIndices() {
-            int size = state.input.length;
-            int latticeIndex = state.getLatticeIndex();
-            int rowIdx = getRowIdx(latticeIndex, size);
-            int colIdx = getColIdx(latticeIndex, size);
-            linearIndicesIK = new int[size];
-            linearIndicesKJ = new int[size];
-            for (int k = 0; k < size; k += 1) {
-                linearIndicesIK[k] = getLinearIndex(rowIdx, k, size);
-                linearIndicesKJ[k] = getLinearIndex(k, colIdx, size);
-            }
+            size = state.input.length;
+            rowIdx = getRowIdx(state.getLatticeIndex(), size);
+            colIdx = getColIdx(state.getLatticeIndex(), size);
         }
 
         @Override
@@ -85,8 +77,8 @@ public class TransitiveClosure {
 
             for (int k = 0; k < size; k += 1) {
                 int value = 0;
-                int linearIndexIK = linearIndicesIK[k];
-                int linearIndexKJ = linearIndicesKJ[k];
+                int linearIndexIK = linearIndices[rowIdx][k];
+                int linearIndexKJ = linearIndices[k][colIdx];
                 int edgeIK = 0;
                 int edgeKJ = 0;
                 synchronized (ob) {
@@ -132,7 +124,6 @@ public class TransitiveClosure {
         @Override
         public void setLatticeIndex(int latticeIndex) {
             state.setLatticeIndex(latticeIndex);
-            recomputeLatticeIndices();
         }
     }
 
@@ -140,11 +131,13 @@ public class TransitiveClosure {
         @Override
         public int[] createInitialLatticeState(Integer[][] input) {
             int size = input.length;
+            linearIndices = new Integer[size][size];
             int[] latticeState = new int[size * size];
             for (int i = 0; i < size; i += 1) {
                 for (int j = 0; j < size; j += 1) {
                     int k = getLinearIndex(i, j, size);
                     latticeState[k] = input[i][j];
+                    linearIndices[i][j] = k;
                 }
             }
             return latticeState;
