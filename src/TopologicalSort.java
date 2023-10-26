@@ -1,13 +1,16 @@
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
 public class TopologicalSort {
     
-//	private final Object ob = new Object(); // for synchronization
+	private final Object ob = new Object(); // for synchronization
 	private Boolean[] fixed = new Boolean[0];
-	private Integer[] inDegrees = new Integer[0];
+	private int[] inDegrees = new int[0];
+	private int[] G = new int[0];
+	private List<List<Integer>> predecessorList;
     /**
      * Run the LLP algorithm for Topological Sort.
      * 
@@ -29,6 +32,7 @@ public class TopologicalSort {
                 .build();
         runner.computeLLP();
         runner.joinAllThreads();
+
         return runner.getOutput();
  
     }
@@ -67,9 +71,6 @@ public class TopologicalSort {
     public class Worker implements LLPWorker<List<List<Integer>>> {
         private LLPWorkerState<List<List<Integer>>> state;
         private int currIdx;
-        private List<Integer> prevIdx;
-   
-        
         
         @Override
         public void setState(LLPWorkerState<List<List<Integer>>> state) {
@@ -82,16 +83,29 @@ public class TopologicalSort {
         
         @Override
         public boolean isForbidden() {
-            currIdx = state.getLatticeIndex();
-            prevIdx = state.input.get(currIdx);
-            System.out.println("Entering into isForbidden "+ currIdx);
+        	
+        	synchronized (ob) {
+        	currIdx = state.getLatticeIndex();
+//        	System.out.println("Entering into isForbidden "+ currIdx);
 
-            if(fixed[currIdx] == false && inDegrees[currIdx] > 0) {
-            	for (int pre:prevIdx) {
-            		if (fixed[pre] == true)
-                		return true;
+//            System.out.println(fixed[currIdx]);
+
+//            	prevIdx = state.input.get(currIdx);
+            	
+//                	value = inDegrees[currIdx];
+//                	System.out.println(fixed[currIdx]);
+
+            //forbidden(j): (fixed[j] = false) ^ for all pre(j) : fixed[i]
+            
+        	if(fixed[currIdx] == false) {
+//        		System.out.println("Entering into isForbidden "+ currIdx);
+        		for (int pre:predecessorList.get(currIdx)) {
+        			if (fixed[pre] == true)
+        				return true;
+        		}
+
             }
-        }
+        	}
             return false;
         }
 
@@ -102,12 +116,28 @@ public class TopologicalSort {
 
         @Override
         public void advance() {
-        	System.out.println("Entering into advance() " + state.getLatticeIndex());
         	
-        	fixed[state.getLatticeIndex()] = true;
-            state.setValue(state.getLatticeIndex());
         	
-        
+        	int newValue = getAdvanceValue();
+        	int value=0;
+        	value = state.getLatticeIndex();
+        	
+        	
+        	if(newValue > 0 ) {
+//        		System.out.println("Entering into advance() " + newValue +" for" + value);
+        	int max = 0;
+        	synchronized (ob) {
+        			for (Integer u : predecessorList.get(value))
+        					max = Math.max(G[u], max);
+        			
+
+        			G[value] = max+1;
+        			fixed[value] = true;
+        			state.setValue(value);
+        			
+        	}
+//        	System.out.println("Value of G:  " + G[value]);
+        	}
         }
 
         @Override
@@ -127,23 +157,19 @@ public class TopologicalSort {
 
     public class Initializer implements LLPInitializer<List<List<Integer>>> {
     	
-
-        @Override
         public int[] createInitialLatticeState(List<List<Integer>> input) {
         	int size = input.size();
-            int[] G = new int[size];
+            G = new int[size];
             fixed = new Boolean[size];
-       
-            int[] inDegrees = new int[size];
+            inDegrees = new int[size];
             
-
             for (List<Integer> neighbors : input) {
 
                 for (int neighbor : neighbors) {
-//                	System.out.print(neighbors+ " ");
                     inDegrees[neighbor]++;
                     fixed[neighbor] = false;
                     G[neighbor] = 0;
+           
                 }
             }
             for (int i = 0; i < size; i++) {
@@ -154,14 +180,29 @@ public class TopologicalSort {
                 }
             }
             
-//            for (int i = 0; i < size; i++) {
-//            	System.out.println("Fixed: "+i+" "+fixed[i]);
-//            	System.out.println("inDegrees: "+i+" "+inDegrees[i]);
-//
-//                }
+            if(!Arrays.stream(inDegrees).anyMatch(num -> num == 0))
+            {
+            	throw new IllegalArgumentException("The graph contains a cycle.");
+            }
+      
+            
+                predecessorList = new ArrayList<>(size);
+
+                for (int i = 0; i < size; i++) {
+                    predecessorList.add(new ArrayList<>());
+                }
+
+                for (int u = 0; u < size; u++) {
+                    for (int v : input.get(u)) {
+                        predecessorList.get(v).add(u);
+                    }
+                }
             
             return inDegrees;
         }
+    }
+
+}
     }
 
 }
