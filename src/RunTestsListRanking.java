@@ -1,14 +1,14 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.Stack;
 
 
 public class RunTestsListRanking {
 	
-
     public static void testListRanking(int nodes, Map<Integer,Integer> childParent) {
         System.out.println("**");
         System.out.println("** ParallelListRanking **");
@@ -27,29 +27,31 @@ public class RunTestsListRanking {
                 }
                 System.out.println();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     }
-  
-    public static void main(String[] args) {
 
-
-      Map<Integer, Integer> childParentMap = new HashMap<>();
-  
-        childParentMap.put(0, -1);
-        childParentMap.put(1, 0);
-        childParentMap.put(2, 1);
-        childParentMap.put(3, 2);
-        childParentMap.put(4, 3);
-        childParentMap.put(5, 4);
+	public static void main(String[] args) {
+        Map<Integer, Integer> childParentMap = new HashMap<>();
+        String fileName = "ListRanking.txt"; 
+        String line;
+        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+            
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 2) {
+                    int key = Integer.parseInt(parts[0]);
+                    int value = Integer.parseInt(parts[1]);
+                    childParentMap.put(key, value);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
     
         testListRanking(childParentMap.size(), childParentMap);
-        
-    }
-    
 
+	}
 
-
-  	
 }
