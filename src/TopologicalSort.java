@@ -3,14 +3,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-
 public class TopologicalSort {
-    
-	private final Object ob = new Object(); // for synchronization
-	private Boolean[] fixed = new Boolean[0];
-	private int[] inDegrees = new int[0];
-	private int[] G = new int[0];
-	private List<List<Integer>> predecessorList;
+    private Boolean[] fixed = new Boolean[0];
+    private List<List<Integer>> predecessorList;
+
     /**
      * Run the LLP algorithm for Topological Sort.
      * 
@@ -22,7 +18,6 @@ public class TopologicalSort {
      * @return The output of LLP upon completion.
      */
     public List<Integer> execute(List<List<Integer>> input, int numThreads) throws InterruptedException {
-    	
         LLPRunner<List<List<Integer>>, List<Integer>> runner = new LLPRunner.LLPRunnerBuilder<List<List<Integer>>, List<Integer>>()
                 .setInitializer(new Initializer())
                 .setInput(input)
@@ -34,7 +29,7 @@ public class TopologicalSort {
         runner.joinAllThreads();
 
         return runner.getOutput();
- 
+
     }
 
     public class OutputBuilder implements LLPOutputBuilder<List<List<Integer>>, List<Integer>> {
@@ -42,15 +37,12 @@ public class TopologicalSort {
         private int size;
         private int[] latticeValues;
 
-
         public List<Integer> build() {
-//        	System.out.println("Entering into Output Build()");
-        	List<Integer> output = new ArrayList<>();
+            List<Integer> output = new ArrayList<>();
             for (int i = 0; i < size; i += 1) {
-                    
-                    output.add(latticeValues[i]);
-                }
-            
+                output.add(latticeValues[i]);
+            }
+
             return output;
         }
 
@@ -71,73 +63,51 @@ public class TopologicalSort {
     public class Worker implements LLPWorker<List<List<Integer>>> {
         private LLPWorkerState<List<List<Integer>>> state;
         private int currIdx;
-        
+
         @Override
         public void setState(LLPWorkerState<List<List<Integer>>> state) {
-//        	System.out.println("I am in worker state now: "+ state.getValue());
             this.state = state;
-            
 
         }
 
-        
         @Override
         public boolean isForbidden() {
-        	
-        	synchronized (ob) {
-        	currIdx = state.getLatticeIndex();
-//        	System.out.println("Entering into isForbidden "+ currIdx);
-
-//            System.out.println(fixed[currIdx]);
-
-//            	prevIdx = state.input.get(currIdx);
-            	
-//                	value = inDegrees[currIdx];
-//                	System.out.println(fixed[currIdx]);
-
-            //forbidden(j): (fixed[j] = false) ^ for all pre(j) : fixed[i]
-            
-        	if(fixed[currIdx] == false) {
-//        		System.out.println("Entering into isForbidden "+ currIdx);
-        		for (int pre:predecessorList.get(currIdx)) {
-        			if (fixed[pre] == true)
-        				return true;
-        		}
-
+            currIdx = state.getLatticeIndex();
+            if (fixed[currIdx] == false) {
+                for (int pre : predecessorList.get(currIdx)) {
+                    if (fixed[pre] == false) {
+                        return false;
+                    }
+                }
+                return true;
             }
-        	}
             return false;
         }
 
         @Override
         public int getAdvanceValue() {
-            return isForbidden() ? 1 : 0;
+            if (!isForbidden()) {
+                return state.getValue();
+            }
+
+            List<Integer> predecessors = predecessorList.get(state.getLatticeIndex());
+            int maxVal = 0;
+            for (int i : predecessors) {
+                maxVal = Math.max(state.getValue(i), maxVal);
+            }
+
+            return maxVal + 1;
         }
 
         @Override
         public void advance() {
-        	
-        	
-        	int newValue = getAdvanceValue();
-        	int value=0;
-        	value = state.getLatticeIndex();
-        	
-        	
-        	if(newValue > 0 ) {
-//        		System.out.println("Entering into advance() " + newValue +" for" + value);
-        	int max = 0;
-        	synchronized (ob) {
-        			for (Integer u : predecessorList.get(value))
-        					max = Math.max(G[u], max);
-        			
+            int newValue = getAdvanceValue();
+            if (newValue > state.getValue()) {
+                state.setValue(newValue);
 
-        			G[value] = max+1;
-        			fixed[value] = true;
-        			state.setValue(value);
-        			
-        	}
-//        	System.out.println("Value of G:  " + G[value]);
-        	}
+                // must assign fixed _after_ state to avoid possible data race
+                fixed[state.getLatticeIndex()] = true;
+            }
         }
 
         @Override
@@ -156,53 +126,47 @@ public class TopologicalSort {
     }
 
     public class Initializer implements LLPInitializer<List<List<Integer>>> {
-    	
         public int[] createInitialLatticeState(List<List<Integer>> input) {
-        	int size = input.size();
-            G = new int[size];
+            int size = input.size();
             fixed = new Boolean[size];
-            inDegrees = new int[size];
-            
-            for (List<Integer> neighbors : input) {
+            int[] inDegrees = new int[size];
+            int[] G = new int[size];
 
+            for (int i = 0; i < size; i++) {
+                G[i] = 0;
+            }
+
+            for (List<Integer> neighbors : input) {
                 for (int neighbor : neighbors) {
                     inDegrees[neighbor]++;
                     fixed[neighbor] = false;
-                    G[neighbor] = 0;
-           
                 }
             }
-            for (int i = 0; i < size; i++) {
 
+            for (int i = 0; i < size; i++) {
                 if (inDegrees[i] == 0) {
                     fixed[i] = true;
-
                 }
             }
-            
-            if(!Arrays.stream(inDegrees).anyMatch(num -> num == 0))
-            {
-            	throw new IllegalArgumentException("The graph contains a cycle.");
+
+            if (!Arrays.stream(inDegrees).anyMatch(num -> num == 0)) {
+                throw new IllegalArgumentException("The graph contains a cycle.");
             }
-      
-            
-                predecessorList = new ArrayList<>(size);
 
-                for (int i = 0; i < size; i++) {
-                    predecessorList.add(new ArrayList<>());
-                }
+            predecessorList = new ArrayList<>(size);
 
-                for (int u = 0; u < size; u++) {
-                    for (int v : input.get(u)) {
-                        predecessorList.get(v).add(u);
-                    }
+            for (int i = 0; i < size; i++) {
+                predecessorList.add(new ArrayList<>());
+            }
+
+            for (int u = 0; u < size; u++) {
+                for (int v : input.get(u)) {
+                    predecessorList.get(v).add(u);
                 }
-            
-            return inDegrees;
+            }
+
+            return G;
         }
-    }
-
-}
     }
 
 }
