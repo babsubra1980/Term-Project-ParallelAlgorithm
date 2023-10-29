@@ -43,7 +43,7 @@ ListRanking.java
 Boruvka.java
 
 
-# List of code to run each assignment problem:
+# Test executables for each assignment problem:
 
 RunTestsTransitiveClosure.java
 
