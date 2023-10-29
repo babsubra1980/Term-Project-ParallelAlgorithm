@@ -1,4 +1,4 @@
-# HW3 - Lattice Linear Predicate Algorithm
+## HW3 - Lattice Linear Predicate Algorithm
 
 The goal of this assignment is to implement a parallel LLP algorithm and apply it to hosts of problems. For this assignment, you can work in groups of two. You should submit the name of your partner in the
 submitted assignment. All the teams must initially agree on the input and the output format. Each team will create two input cases for each of the problem.
@@ -12,9 +12,22 @@ You would need to design the API for the library such that it is easy to use the
 Teams 7,8,9 and 10
 
 (a) Computing transitive closure of a directed graph
+
 (b) Topological Sort of an Acyclic Directed Graph
+
 (c) Boruvka’s Algorithm
+
 (d) List-Ranking Problem
 
+# Instructions to run the code
+
+# Computing transitive closure of a directed graph
+
+
+# Topological Sort of an Acyclic Directed Graph
+
+# List-Ranking Problem
+
+# Boruvka’s Algorithm
 
 
