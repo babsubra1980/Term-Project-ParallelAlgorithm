@@ -92,10 +92,11 @@ public class RunTestsTopologicalSort {
                 e.printStackTrace();
             }
             
-        Graph graph = new Graph(lines);
+        Graph graph = new Graph(lines-1);
         line = null;
         try (BufferedReader br = new BufferedReader(new FileReader(fileName)) ) {
             while ((line = br.readLine()) != null) {
+		if (line.contains(":")) {
                 String[] parts = line.split(":");
                 int node = Integer.parseInt(parts[0]);
                 uniqueVertices.add(node);
@@ -109,7 +110,7 @@ public class RunTestsTopologicalSort {
 //                        System.out.println("Neighbor: "+neighbor+" Node: "+node);
                     }
                 }
-
+		}
 
             }
 //            System.out.println("Number of vertices: "+uniqueVertices.size());
