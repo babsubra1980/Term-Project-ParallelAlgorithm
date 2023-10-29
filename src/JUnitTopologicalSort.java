@@ -91,10 +91,11 @@ public class JUnitTopologicalSort {
                 e.printStackTrace();
             }
             
-        Graph2 graph = new Graph2(lines);
+        Graph2 graph = new Graph2(lines-1);
         line = null;
         try (BufferedReader br = new BufferedReader(new FileReader(fileName)) ) {
             while ((line = br.readLine()) != null) {
+		if (line.contains(":")) {
                 String[] parts = line.split(":");
                 int node = Integer.parseInt(parts[0]);
                 uniqueVertices.add(node);
@@ -107,7 +108,7 @@ public class JUnitTopologicalSort {
                     }
                 }
 
-
+		}
             }
         } catch (IOException e) {
             e.printStackTrace();
