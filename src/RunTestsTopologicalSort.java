@@ -1,8 +1,14 @@
+
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+
 
 class Graph {
     private int V; 
@@ -47,7 +53,10 @@ class Graph {
     
 }
 
+
+
 public class RunTestsTopologicalSort {
+	
 	
     public static void testTopologicalSort(int nodes, List<List<Integer>> list) {
         System.out.println("**");
@@ -56,7 +65,7 @@ public class RunTestsTopologicalSort {
     	System.out.println("**");
 
         try {
-			List<Integer> out = ptsort.execute(list, 2);
+			List<Integer> out = ptsort.execute(nodes,list, 2);
             for (Integer val : out) {
                     System.out.print(val + " ");
                 }
@@ -67,8 +76,9 @@ public class RunTestsTopologicalSort {
     }
 
 	public static void main(String[] args) {
-		
+		Set<Integer> uniqueVertices = new HashSet<>();
     	String fileName = "TopoSort.txt";
+    
     	int lines = 0;
     	String line;
         try (BufferedReader br = new BufferedReader(new FileReader(fileName)) ) {
@@ -88,22 +98,30 @@ public class RunTestsTopologicalSort {
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(":");
                 int node = Integer.parseInt(parts[0]);
+                uniqueVertices.add(node);
                 if (parts.length > 1) {
                     String[] neighborStrings = parts[1].split(",");
                     for (String neighborStr : neighborStrings) {
                         int neighbor = Integer.parseInt(neighborStr);
                         graph.addEdge(neighbor,node);
+                        uniqueVertices.add(neighbor);
+                        
+//                        System.out.println("Neighbor: "+neighbor+" Node: "+node);
                     }
                 }
 
 
             }
+//            System.out.println("Number of vertices: "+uniqueVertices.size());
         } catch (IOException e) {
             e.printStackTrace();
         }
         
-        testTopologicalSort(lines-1, Graph.getAdj());
+        testTopologicalSort(uniqueVertices.size(), Graph.getAdj());
 
+
+        
+        
 	}
 
 }
