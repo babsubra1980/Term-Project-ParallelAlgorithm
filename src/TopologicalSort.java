@@ -3,12 +3,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class TopologicalSort {
-    private Boolean[] fixed = new Boolean[0];
-    private List<List<Integer>> predecessorList;
 
+public class TopologicalSort {
+    
+	private final Object ob = new Object(); // for synchronization
+	private Boolean[] fixed = new Boolean[0];
+	private int[] inDegrees = new int[0];
+	private int[] G = new int[0];
+	private List<List<Integer>> predecessorList;
+	private int vertices;
     /**
      * Run the LLP algorithm for Topological Sort.
+     * @param nodes 
      * 
      * @param input      Adjacency list, with node and it's predecessor
      * 
@@ -17,7 +23,8 @@ public class TopologicalSort {
      *                   minus one (for full utilization off the main thread).
      * @return The output of LLP upon completion.
      */
-    public List<Integer> execute(List<List<Integer>> input, int numThreads) throws InterruptedException {
+    public List<Integer> execute(int nodes, List<List<Integer>> input, int numThreads) throws InterruptedException {
+    	vertices = nodes;
         LLPRunner<List<List<Integer>>, List<Integer>> runner = new LLPRunner.LLPRunnerBuilder<List<List<Integer>>, List<Integer>>()
                 .setInitializer(new Initializer())
                 .setInput(input)
@@ -29,7 +36,7 @@ public class TopologicalSort {
         runner.joinAllThreads();
 
         return runner.getOutput();
-
+ 
     }
 
     public class OutputBuilder implements LLPOutputBuilder<List<List<Integer>>, List<Integer>> {
@@ -37,12 +44,15 @@ public class TopologicalSort {
         private int size;
         private int[] latticeValues;
 
-        public List<Integer> build() {
-            List<Integer> output = new ArrayList<>();
-            for (int i = 0; i < size; i += 1) {
-                output.add(latticeValues[i]);
-            }
 
+        public List<Integer> build() {
+//        	System.out.println("Entering into Output Build()");
+        	List<Integer> output = new ArrayList<>();
+            for (int i = 0; i < size; i += 1) {
+                    
+                    output.add(latticeValues[i]);
+                }
+            
             return output;
         }
 
@@ -63,24 +73,41 @@ public class TopologicalSort {
     public class Worker implements LLPWorker<List<List<Integer>>> {
         private LLPWorkerState<List<List<Integer>>> state;
         private int currIdx;
-
+        
         @Override
         public void setState(LLPWorkerState<List<List<Integer>>> state) {
+//        	System.out.println("I am in worker state now: "+ state.getValue());
             this.state = state;
+            
 
         }
 
+        
         @Override
         public boolean isForbidden() {
-            currIdx = state.getLatticeIndex();
-            if (fixed[currIdx] == false) {
-                for (int pre : predecessorList.get(currIdx)) {
-                    if (fixed[pre] == false) {
-                        return false;
-                    }
-                }
-                return true;
+        	
+        	synchronized (ob) {
+        	currIdx = state.getLatticeIndex();
+//        	System.out.println("Entering into isForbidden "+ currIdx);
+
+//            System.out.println(fixed[currIdx]);
+
+//            	prevIdx = state.input.get(currIdx);
+            	
+//                	value = inDegrees[currIdx];
+//                	System.out.println(fixed[currIdx]);
+
+            //forbidden(j): (fixed[j] = false) ^ for all pre(j) : fixed[i]
+            
+        	if(fixed[currIdx] == false) {
+//        		System.out.println("Entering into isForbidden "+ currIdx);
+        		for (int pre:predecessorList.get(currIdx)) {
+        			if (fixed[pre] == false)
+        				return false;
+        		}
+        		return true;
             }
+        	}
             return false;
         }
 
@@ -101,9 +128,11 @@ public class TopologicalSort {
 
         @Override
         public void advance() {
+        	
             int newValue = getAdvanceValue();
             if (newValue > state.getValue()) {
-                state.setValue(newValue);
+//                state.setValue(state.getLatticeIndex());
+            	state.setValue(newValue);
 
                 // must assign fixed _after_ state to avoid possible data race
                 fixed[state.getLatticeIndex()] = true;
@@ -126,45 +155,48 @@ public class TopologicalSort {
     }
 
     public class Initializer implements LLPInitializer<List<List<Integer>>> {
+    	
         public int[] createInitialLatticeState(List<List<Integer>> input) {
-            int size = input.size();
+        	int size = vertices;
+        	
+            G = new int[size];
             fixed = new Boolean[size];
-            int[] inDegrees = new int[size];
-            int[] G = new int[size];
-
-            for (int i = 0; i < size; i++) {
-                G[i] = 0;
-            }
-
+            inDegrees = new int[size];
+            
             for (List<Integer> neighbors : input) {
+
                 for (int neighbor : neighbors) {
                     inDegrees[neighbor]++;
                     fixed[neighbor] = false;
+                    G[neighbor] = 0;
+           
                 }
             }
-
             for (int i = 0; i < size; i++) {
+
                 if (inDegrees[i] == 0) {
                     fixed[i] = true;
                 }
             }
-
-            if (!Arrays.stream(inDegrees).anyMatch(num -> num == 0)) {
-                throw new IllegalArgumentException("The graph contains a cycle.");
+            
+            if(!Arrays.stream(inDegrees).anyMatch(num -> num == 0))
+            {
+            	throw new IllegalArgumentException("The graph contains a cycle.");
             }
+      
+            
+                predecessorList = new ArrayList<>(size);
 
-            predecessorList = new ArrayList<>(size);
-
-            for (int i = 0; i < size; i++) {
-                predecessorList.add(new ArrayList<>());
-            }
-
-            for (int u = 0; u < size; u++) {
-                for (int v : input.get(u)) {
-                    predecessorList.get(v).add(u);
+                for (int i = 0; i < size; i++) {
+                    predecessorList.add(new ArrayList<>());
                 }
-            }
 
+                for (int u = 0; u < size; u++) {
+                    for (int v : input.get(u)) {
+                        predecessorList.get(v).add(u);
+                    }
+                }
+            
             return G;
         }
     }
