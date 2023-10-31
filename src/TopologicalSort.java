@@ -6,7 +6,7 @@ import java.util.List;
 public class TopologicalSort {
     private Boolean[] fixed = new Boolean[0];
     private List<List<Integer>> predecessorList;
-
+    private int vertices;
     /**
      * Run the LLP algorithm for Topological Sort.
      * 
@@ -17,7 +17,8 @@ public class TopologicalSort {
      *                   minus one (for full utilization off the main thread).
      * @return The output of LLP upon completion.
      */
-    public List<Integer> execute(List<List<Integer>> input, int numThreads) throws InterruptedException {
+    public List<Integer> execute(int nodes, List<List<Integer>> input, int numThreads) throws InterruptedException {
+    	vertices = nodes;
         LLPRunner<List<List<Integer>>, List<Integer>> runner = new LLPRunner.LLPRunnerBuilder<List<List<Integer>>, List<Integer>>()
                 .setInitializer(new Initializer())
                 .setInput(input)
@@ -127,7 +128,7 @@ public class TopologicalSort {
 
     public class Initializer implements LLPInitializer<List<List<Integer>>> {
         public int[] createInitialLatticeState(List<List<Integer>> input) {
-            int size = input.size();
+            int size = vertices;
             fixed = new Boolean[size];
             int[] inDegrees = new int[size];
             int[] G = new int[size];
