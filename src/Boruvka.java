@@ -93,6 +93,55 @@ public class Boruvka {
         return treeified;
     }
 
+    public class Worker implements LLPWorker<WeightedGraph> {
+        private LLPWorkerState<WeightedGraph> state;
+
+        @Override
+        public void setState(LLPWorkerState<WeightedGraph> state) {
+            this.state = state;
+        }
+
+        @Override
+        public boolean isForbidden() {
+            if (state.getValue() == -1) {
+                return false;
+            }
+
+            if (state.getValue(state.getValue()) == -1) {
+                return false;
+            }
+
+            return state.getValue() != state.getValue(state.getValue());
+        }
+
+        @Override
+        public int getAdvanceValue() {
+            return isForbidden() ? state.getValue(state.getValue()) : state.getValue();
+        }
+
+        @Override
+        public void advance() {
+            int newValue = getAdvanceValue();
+            if (newValue != state.getValue()) {
+                state.setValue(newValue);
+            }
+        }
+
+        @Override
+        public LLPWorker<WeightedGraph> clone() {
+            Worker workerClone = new Worker();
+            if (state != null) {
+                workerClone.setState(state.clone());
+            }
+            return workerClone;
+        }
+
+        @Override
+        public void setLatticeIndex(int latticeIndex) {
+            state.setLatticeIndex(latticeIndex);
+        }
+    }
+
     public static Map<Integer, WeightedEdge> getMinEdgesOf(WeightedGraph graph, boolean undirected, boolean treeify) {
         Set<Integer> activeVertices = new HashSet<Integer>();
         for (WeightedEdge edge : graph.edges) {
@@ -149,7 +198,7 @@ public class Boruvka {
         return weightMap;
     }
 
-    public WeightedGraph execute(WeightedGraph input, int numThreads) {
+    public WeightedGraph execute(WeightedGraph input, int numThreads) throws InterruptedException {
         minEdges = Boruvka.getMinEdgesOf(input, true, true);
         minEdgeGraph = getMinEdgeGraphOf(input.size, minEdges);
         weightToEdgeMap = getWeightMapOf(input);
@@ -210,11 +259,15 @@ public class Boruvka {
                     output.edges.add(edge);
                 }
             }
-            WeightedGraph boruvka = new Boruvka().execute(getPrimedGraph(latticeValues), numThreads);
-            for (WeightedEdge edge : boruvka.edges) {
-                if (weightToEdgeMap.containsKey(edge.weight)) {
-                    output.edges.add(weightToEdgeMap.get(edge.weight));
+            try {
+                WeightedGraph boruvka = new Boruvka().execute(getPrimedGraph(latticeValues), numThreads);
+                for (WeightedEdge edge : boruvka.edges) {
+                    if (weightToEdgeMap.containsKey(edge.weight)) {
+                        output.edges.add(weightToEdgeMap.get(edge.weight));
+                    }
                 }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
             return output;
         }
