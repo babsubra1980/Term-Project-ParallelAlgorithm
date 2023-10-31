@@ -10,6 +10,7 @@ public class Boruvka {
     private Map<Integer, WeightedEdge> minEdges = new HashMap<Integer, WeightedEdge>();
     private WeightedGraph minEdgeGraph = new WeightedGraph(0, new ArrayList<WeightedEdge>());
     private Map<Double, WeightedEdge> weightToEdgeMap = new HashMap<Double, WeightedEdge>();
+    private int size;
     private int numThreads;
 
     public static class WeightedEdge {
@@ -152,6 +153,7 @@ public class Boruvka {
         minEdges = Boruvka.getMinEdgesOf(input, true, true);
         minEdgeGraph = getMinEdgeGraphOf(input.size, minEdges);
         weightToEdgeMap = getWeightMapOf(input);
+        size = input.size;
         this.numThreads = numThreads;
         LLPRunner<WeightedGraph, WeightedGraph> runner = new LLPRunner.LLPRunnerBuilder<WeightedGraph, WeightedGraph>()
                 .setInitializer(new Initializer())
@@ -166,7 +168,24 @@ public class Boruvka {
     }
 
     public WeightedGraph getPrimedGraph(int[] latticeValues) {
+        WeightedGraph primedGraph = new Boruvka.WeightedGraph(size, new ArrayList<WeightedEdge>());
 
+        Set<Integer> vertices = new HashSet<Integer>();
+        for (int i = 0; i < size; ++i) {
+            if (i == latticeValues[i]) {
+                vertices.add(i);
+            }
+        }
+
+        for (WeightedEdge edge : minEdgeGraph.edges) {
+            int a = latticeValues[edge.source];
+            int b = latticeValues[edge.dest];
+            if (a != b && vertices.contains(a) && vertices.contains(b)) {
+                primedGraph.edges.add(new WeightedEdge(a, b, edge.weight));
+            }
+        }
+
+        return primedGraph;
     }
 
     public class OutputBuilder implements LLPOutputBuilder<WeightedGraph, WeightedGraph> {
@@ -175,6 +194,16 @@ public class Boruvka {
 
         @Override
         public WeightedGraph build() {
+            boolean hasEdges = false;
+            for (WeightedEdge edge : input.edges) {
+                if (edge.source != edge.dest) {
+                    hasEdges = true;
+                }
+            }
+            if (!hasEdges) {
+                return new WeightedGraph(input.size, new ArrayList<WeightedEdge>());
+            }
+
             WeightedGraph output = new WeightedGraph(input.size, new ArrayList<WeightedEdge>());
             for (WeightedEdge edge : minEdgeGraph.edges) {
                 if (edge.source != edge.dest) {
@@ -200,6 +229,24 @@ public class Boruvka {
         public LLPOutputBuilder<WeightedGraph, WeightedGraph> setLatticeValues(int[] latticeValues) {
             this.latticeValues = latticeValues;
             return this;
+        }
+    }
+
+    public class Initializer implements LLPInitializer<WeightedGraph> {
+        @Override
+        public int[] createInitialLatticeState(WeightedGraph graph) {
+            int size = graph.size;
+            int[] latticeIndices = new int[size];
+            for (int i = 0; i < size; ++i) {
+                latticeIndices[i] = -1;
+            }
+
+            // must have already been treeified!
+            for (WeightedEdge edge : minEdgeGraph.edges) {
+                latticeIndices[edge.source] = edge.dest;
+            }
+
+            return latticeIndices;
         }
     }
 }
