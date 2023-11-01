@@ -279,3 +279,148 @@ Node 11 <-> Node 10 Weight: 15.0
 *** Minimum Spanning Tree ***
 
 Empty Graph
+
+
+**
+
+** ParallelListRanking - JUnit Testing : List Ranking of a Simple Linear Graph **
+
+**
+
+Node 0 has distance 1 
+
+Node 1 has distance 2 
+
+Node 2 has distance 3 
+
+Node 3 has distance 4 
+
+Node 4 has distance 5 
+
+Node 5 has distance 6 
+
+**
+
+** ParallelListRanking - JUnit Testing : List Ranking of a Tree Structure **
+
+**
+
+Node 0 has distance 1 
+
+Node 1 has distance 2 
+
+Node 2 has distance 2 
+
+Node 3 has distance 3 
+
+Node 4 has distance 4 
+
+Node 5 has distance 4 
+
+Node 6 has distance 5 
+
+
+**
+
+** ParallelListRanking - JUnit Testing : List Ranking of a Single Node Graph **
+
+**
+
+Node 0 has distance 1 
+
+**
+
+** ParallelListRanking - JUnit Testing : List Ranking of a Empty Graph **
+
+**
+
+**
+
+** ParallelTopologicalSort - JUnit Testing : Simple Linear Graph **
+
+**
+
+0 1 2 3 4 5 6 7 8 9 10 
+
+**
+
+** ParallelTopologicalSort - JUnit Testing : Multiple Independent Chains **
+
+**
+
+0 1 1 2 3 3 4 0 1 2 3 
+
+**
+
+** ParallelTopologicalSort - JUnit Testing : DAG with Cycles **
+
+**
+
+**
+
+** ParallelTopologicalSort - JUnit Testing : Tree Structure **
+
+**
+
+0 1 1 2 3 3 4 5 6 7 8 
+
+**
+
+** ParallelTopologicalSort - JUnit Testing : Empty Graph **
+
+**
+
+**
+
+** ParallelTransitiveClosure - JUnit Testing : Transitive Closure of a Graph with 4 nodes - Linear Graph **
+
+**
+
+1 1 1 1 
+
+0 1 1 1 
+
+0 0 1 1 
+
+0 0 0 1 
+
+**
+
+** ParallelTransitiveClosure - JUnit Testing : Transitive Closure of a Empty Graph with 0 nodes **
+
+**
+
+**
+
+** ParallelTransitiveClosure - JUnit Testing : Transitive Closure of a Graph without square matrix **
+
+**
+
+**
+
+** ParallelTransitiveClosure - JUnit Testing : Transitive Closure of a Cyclic Graph **
+
+**
+
+1 1 1 1 
+
+1 1 1 1 
+
+1 1 1 1 
+
+1 1 1 1 
+
+**
+
+** ParallelTransitiveClosure - JUnit Testing : Transitive Closure of a Graph with disconnected components **
+
+**
+
+0 1 0 0 
+
+0 0 0 0 
+
+0 0 0 0 
+
+0 0 0 0 
+
