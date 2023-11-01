@@ -108,15 +108,31 @@ Boruvka-4.txt
 
 1) Open Eclipse - Launch the Eclipse Integrated Development Environment (IDE) on your computer.
    
-2) Import or Open our Project including APIs and JUnit test cases (submitted as archive file in Canvas). Please make sure that JUnit is properly configured in your Eclipse IDE.
+2) Import or Open our Project including APIs, JUnit Code, test inputs (submitted as archive file in Canvas - bp26282_rd28444.zip). Please make sure that JUnit is properly configured in your Eclipse IDE.
+   
+3) Navigate to our executables for each of the assignment problem and execute the code (which will run against one of the test input file)
+
+   RunTestsTransitiveClosure.java
+
+   RunTestsTopologicalSort.java
+
+   RunTestsListRanking.java
+
+   RunTestsBoruvka.java
   
-3) Navigate to Your JUnit Test Class. Locate our JUnit test class (listed above) in the Project Explorer. It should be in the same project as the code you want to test. The test class's name typically follows the pattern:
+5) Navigate to our JUnit Test Class. Locate our JUnit test class (listed above) in the Project Explorer. It should be in the same project as the code you want to test. The test class's name typically follows the pattern:
 
-   JUnit<AssignmentProblem>.java.
+   JUnitTransitiveClosure.java
 
-4) Run JUnit Tests. Right-click on the JUnit test class or specific test method you want to run. Choose Run As > JUnit Test. Alternatively, you can use the keyboard shortcut Ctrl + F11 (Windows/Linux) or Command + F11 (Mac) to run the JUnit tests.
+   JUnitTopologicalSort.java
 
-5) View Test Results. The JUnit test results will appear in the JUnit view in Eclipse. You can access the JUnit view by clicking Window > Show View > Other, then selecting Java > JUnit. This view will display the test results, including passed and failed tests.
+   JUnitListRanking.java
+
+   JUnitBoruvka.java
+
+6) Run JUnit Tests which will pull input from multiple test input files for each assignment problem. Right-click on the JUnit test class or specific test method you want to run. Choose Run As > JUnit Test. Alternatively, you can use the keyboard shortcut Ctrl + F11 (Windows/Linux) or Command + F11 (Mac) to run the JUnit tests.
+
+7) View Test Results. The JUnit test results will appear in the JUnit view in Eclipse. You can access the JUnit view by clicking Window > Show View > Other, then selecting Java > JUnit. This view will display the test results, including passed and failed tests.
 
 # Sample Output of each assignment problem below:
 
@@ -194,3 +210,72 @@ Node 8 <-> Node 9 Weight: 6.0
 
 Node 11 <-> Node 10 Weight: 15.0
 
+# Sample JUnit Test Results of each assignment problem below:
+
+**
+
+** ParallelBoruvka - JUnit Testing : Boruvka's algorithm of a Simple Linear Graph **
+
+**
+
+*** Minimum Spanning Tree ***
+
+Node 0 <-> Node 3 Weight: 5.0
+
+Node 1 <-> Node 0 Weight: 10.0
+
+Node 3 <-> Node 2 Weight: 4.0
+
+**
+
+** ParallelBoruvka - JUnit Testing : Boruvka's algorithm of a Tree Structure **
+
+**
+
+*** Minimum Spanning Tree ***
+
+Node 0 <-> Node 1 Weight: 2.0
+
+Node 2 <-> Node 3 Weight: 1.0
+
+Node 5 <-> Node 6 Weight: 4.0
+
+Node 6 <-> Node 4 Weight: 2.0
+
+Node 7 <-> Node 8 Weight: 7.0
+
+Node 9 <-> Node 10 Weight: 3.0
+
+**
+
+** ParallelBoruvka - JUnit Testing : Boruvka's algorithm of a Large Graph - MST distance **
+
+**
+
+*** Minimum Spanning Tree ***
+
+Node 0 <-> Node 2 Weight: 6.0
+
+Node 1 <-> Node 3 Weight: 5.0
+
+Node 3 <-> Node 12 Weight: 1.0
+
+Node 4 <-> Node 3 Weight: 4.0
+
+Node 5 <-> Node 6 Weight: 5.0
+
+Node 6 <-> Node 7 Weight: 4.0
+
+Node 8 <-> Node 9 Weight: 6.0
+
+Node 11 <-> Node 10 Weight: 15.0
+
+**
+
+** ParallelBoruvka - JUnit Testing : Boruvka's algorithm of Empty Graph **
+
+**
+
+*** Minimum Spanning Tree ***
+
+Empty Graph
