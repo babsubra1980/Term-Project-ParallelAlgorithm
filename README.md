@@ -64,6 +64,45 @@ JUnitListRanking.java
 
 JUnitBoruvka.java
 
+# List of Test Input Files 
+
+TransitiveInput.txt
+
+TransitiveInput-1.txt
+
+TransitiveInput-2.txt
+
+TransitiveInput-3.txt
+
+TransitiveInput-4.txt
+
+TopoSort.txt
+
+TopoSort-1.txt
+
+TopoSort-2.txt
+
+TopoSort-3.txt
+
+TopoSort-4.txt
+
+ListRanking.txt
+
+ListRanking-1.txt
+
+ListRanking-2.txt
+
+ListRanking-3.txt
+
+ListRanking-4.txt
+
+Boruvka-1.txt
+
+Boruvka-2.txt
+
+Boruvka-3.txt
+
+Boruvka-4.txt
 
 # Instructions to run the code
 
