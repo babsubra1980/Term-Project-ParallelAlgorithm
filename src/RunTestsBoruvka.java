@@ -56,7 +56,7 @@ public class RunTestsBoruvka {
     	System.out.println("**");
     	System.out.println("*** Minimum Spanning Tree ***");
       int numNodes = 0;
-      String fileName = "BoruvkaInput-5.txt"; 
+      String fileName = "BoruvkaInput-1.txt"; 
       String line;
       try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
       
