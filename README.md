@@ -1,15 +1,13 @@
-## HW3 - Lattice Linear Predicate Algorithm
+## HW3 - Lattice Linear Predicate Algorithm 
 
-The goal of this assignment is to implement a parallel LLP algorithm and apply it to hosts of problems. For this assignment, you can work in groups of two. You should submit the name of your partner in the
-submitted assignment. All the teams must initially agree on the input and the output format. Each team will create two input cases for each of the problem.
+# Babuji Periasubbramaniam (bp26282) & Ryan Denlinger (rd28444)
 
-You will submit the source code for your assignment along with the runtimes for each of the problems.
+The goal of this assignment is to implement a parallel LLP algorithm and apply it to hosts of problems.
 
-1. (100 points) Implement a library in Java that allows one to use LLP parallel algorithm to solve a problem.
+Implementation of libraries in Java which allows us to use LLP parallel algorithm to solve a problem.
 
-You would need to design the API for the library such that it is easy to use the LLP algorithm for various problems. Apply your library to solve the following problems:
+Designed API for the library such that it is easy to use the LLP algorithm for various problems. Applied our library to solve the following problems:
 
-Teams 7,8,9 and 10
 
 (a) Computing transitive closure of a directed graph
 
@@ -19,7 +17,7 @@ Teams 7,8,9 and 10
 
 (d) List-Ranking Problem
 
-# List of API Libraries developed for this assignment
+# List of libraries: 
 
 LLPInitializer.java
 
@@ -32,7 +30,7 @@ LLPOutputBuilder.java
 LLPWorkerState.java
 
 
-# List of code for each assignment problem:
+# List of APIs:
 
 TransitiveClosure.java
 
@@ -54,7 +52,7 @@ RunTestsListRanking.java
 RunTestsBoruvka.java
 
 
-# List of JUnit Test Cases
+# List of JUnit Test Cases for each assignment problem:
 
 JUnitTransitiveClosure.java
 
@@ -64,7 +62,7 @@ JUnitListRanking.java
 
 JUnitBoruvka.java
 
-# List of Test Input Files 
+# List of Test Input Files for each assignment problem:
 
 TransitiveInput.txt
 
@@ -103,6 +101,16 @@ Boruvka-2.txt
 Boruvka-3.txt
 
 Boruvka-4.txt
+
+# Time and Work Complexity:
+
+(a) Computing transitive closure of a directed graph - O(n^3 log n), time depends on number of processors. O((log n)^2) parallel time for n^2 processors, O(log n) parallel time for n^3 processors
+
+(b) Topological Sort of an Acyclic Directed Graph - Time Complexity of O(n), Work Complexity of O(n) - for totally ordered DAG
+
+(c) Boruvka’s Algorithm - Time Complexity of O(log^2 n), Work Complexity of O(mlogn)
+
+(d) List-Ranking Problem - Time Complexity of O(log n), Work Complexity of O(nlogn) - Not a work optimal
 
 # Instructions to run the code
 
