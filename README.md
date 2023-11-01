@@ -84,45 +84,74 @@ JUnitBoruvka.java
 # Computing transitive closure of a directed graph:
 
 **
+
 ** ParallelTransitiveClosure **
+
 **
+
 1 1 1 1 
+
 0 1 1 1 
+
 0 0 1 1 
+
 0 0 0 1 
 
 # Topological Sort of an Acyclic Directed Graph
 
 **
+
 ** ParallelTopologicalSort **
+
 **
+
 0 1 2 3 4 5 6 7 8 9 10 
 
 
 # List-Ranking Problem
 
 **
+
 ** ParallelListRanking **
+
 **
+
+
 Node 0 has distance 1 
+
 Node 1 has distance 2 
+
 Node 2 has distance 3 
+
 Node 3 has distance 4 
+
 Node 4 has distance 5 
+
 Node 5 has distance 6 
 
 # Boruvka’s Algorithm
 
 **
+
 ** ParallelBoruvka **
+
 **
+
 *** Minimum Spanning Tree ***
+
 Node 0 <-> Node 2 Weight: 6.0
+
 Node 1 <-> Node 3 Weight: 5.0
+
 Node 3 <-> Node 12 Weight: 1.0
+
 Node 4 <-> Node 3 Weight: 4.0
+
 Node 5 <-> Node 6 Weight: 5.0
+
 Node 6 <-> Node 7 Weight: 4.0
+
 Node 8 <-> Node 9 Weight: 6.0
+
 Node 11 <-> Node 10 Weight: 15.0
 
